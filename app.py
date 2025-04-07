@@ -8,7 +8,8 @@ import yagmail
 #librerias para OCR
 import pytesseract
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-#from pdf2image import convert_from_bytes
+import platform
+from pdf2image import convert_from_bytes
 from PIL import Image
 
 def merge_pdfs(pdf_files):
@@ -70,34 +71,34 @@ elif menu == "Extraer texto de pdf":
 
 elif menu == "Extraer texto de pdf escaneado":
     archivo_pdf = st.file_uploader("📂 Carga un PDF escaneado", type="pdf")
+    sistema = platform.system()
 
     if archivo_pdf:
         st.info("Procesando OCR...")
 
-        #imagenes = convert_from_bytes(archivo_pdf.read())
-        imagenes = convert_from_bytes(archivo_pdf.read(), poppler_path=r"C:\poppler-24.08.0\Library\bin")
+        # Leer PDF a imágenes con manejo de poppler
+        if sistema == "Windows":
+            poppler_path = r"C:\poppler-24.08.0\Library\bin"
+            imagenes = convert_from_bytes(archivo_pdf.read(), poppler_path=poppler_path)
+        else:
+            imagenes = convert_from_bytes(archivo_pdf.read())  # en Cloud
+
         texto_total = ""
 
-        # Especificar manualmente la carpeta de los idiomas
-        import os
-        os.environ["TESSDATA_PREFIX"] = r"C:\Program Files\Tesseract-OCR\tessdata"
+        # Configurar TESSDATA solo en Windows
+        if sistema == "Windows":
+            import os
+            os.environ["TESSDATA_PREFIX"] = r"C:\Program Files\Tesseract-OCR\tessdata"
 
         for i, img in enumerate(imagenes):
             st.write(f"Página {i + 1}")
-            #st.image(img, use_column_width=True)
             st.image(img, use_container_width=True)
-            # Forzar la ruta de los archivos de idioma
-            #custom_oem_psm_config = r'--tessdata-dir "C:\Program Files\Tesseract-OCR\tessdata"'
-            #texto = pytesseract.image_to_string(img, lang="spa", config=custom_oem_psm_config)
             texto = pytesseract.image_to_string(img, lang="spa")
             texto_total += f"\n--- Página {i + 1} ---\n{texto}"
 
         st.subheader("📄 Texto extraído (OCR):")
         st.text_area("Resultado OCR", texto_total, height=400)
 
-        #'eng': Inglés, 'spa': Español, 'fra': Francés, 'deu': Alemán
-
-        # Botón para descargar el texto
         st.download_button(
             label="Descargar texto como .txt",
             data=texto_total,
