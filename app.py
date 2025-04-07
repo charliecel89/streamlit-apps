@@ -3,11 +3,12 @@ from PyPDF2 import PdfMerger
 from io import BytesIO
 import pandas as pd
 import subprocess
+import fitz  # PyMuPDF
 import yagmail
 #librerias para OCR
 import pytesseract
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-from pdf2image import convert_from_bytes
+#from pdf2image import convert_from_bytes
 from PIL import Image
 
 def merge_pdfs(pdf_files):
