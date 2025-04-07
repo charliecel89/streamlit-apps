@@ -11,6 +11,7 @@ pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tessera
 import platform
 from pdf2image import convert_from_bytes
 from PIL import Image
+import io
 
 def merge_pdfs(pdf_files):
     merger = PdfMerger()
@@ -90,11 +91,27 @@ elif menu == "Extraer texto de pdf escaneado":
             import os
             os.environ["TESSDATA_PREFIX"] = r"C:\Program Files\Tesseract-OCR\tessdata"
 
-        for i, img in enumerate(imagenes):
-            st.write(f"Página {i + 1}")
-            st.image(img, use_container_width=True)
-            texto = pytesseract.image_to_string(img, lang="spa")
-            texto_total += f"\n--- Página {i + 1} ---\n{texto}"
+            for i, img in enumerate(imagenes):
+                st.write(f"Página {i + 1}")
+                st.image(img, use_container_width=True)
+                texto = pytesseract.image_to_string(img, lang="spa")
+                texto_total += f"\n--- Página {i + 1} ---\n{texto}"
+        else:
+            with fitz.open(stream=archivo_pdf.read(), filetype="pdf") as doc:
+                for i, page in enumerate(doc):
+                    # Renderizar la página a pixmap
+                    pix = page.get_pixmap(dpi=300)
+
+                    # Convertir pixmap a PIL Image
+                    img = Image.open(io.BytesIO(pix.tobytes("png")))
+
+                    st.write(f"Página {i + 1}")
+                    st.image(img, use_container_width=True)
+
+                    texto = pytesseract.image_to_string(img, lang="spa")
+                    texto_total += f"\n--- Página {i + 1} ---\n{texto}"
+
+
 
         st.subheader("📄 Texto extraído (OCR):")
         st.text_area("Resultado OCR", texto_total, height=400)
