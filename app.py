@@ -4,8 +4,6 @@ from io import BytesIO
 import pandas as pd
 import subprocess
 import yagmail
-import fitz
-from tkinter import filedialog, Tk
 #librerias para OCR
 import pytesseract
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
