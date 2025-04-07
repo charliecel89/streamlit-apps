@@ -81,8 +81,6 @@ elif menu == "Extraer texto de pdf escaneado":
         if sistema == "Windows":
             poppler_path = r"C:\poppler-24.08.0\Library\bin"
             imagenes = convert_from_bytes(archivo_pdf.read(), poppler_path=poppler_path)
-        else:
-            imagenes = convert_from_bytes(archivo_pdf.read())  # en Cloud
 
         texto_total = ""
 
