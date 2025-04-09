@@ -96,9 +96,12 @@ elif menu == "Extraer texto de pdf":
         st.text_area("Contenido", texto_total, height=400)
 
 elif menu == "Extraer texto de pdf escaneado":
+
     archivo_pdf = st.file_uploader("📂 Carga un PDF escaneado", type="pdf")
+    archivo_pdf.seek(0)
     pdf_bytes = archivo_pdf.read()
     sistema = platform.system()
+
 
     if archivo_pdf:
         st.info("Procesando OCR...")
