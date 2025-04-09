@@ -98,13 +98,14 @@ elif menu == "Extraer texto de pdf":
 elif menu == "Extraer texto de pdf escaneado":
 
     archivo_pdf = st.file_uploader("📂 Carga un PDF escaneado", type="pdf")
-    archivo_pdf.seek(0)
-    pdf_bytes = archivo_pdf.read()
     sistema = platform.system()
 
-
     if archivo_pdf:
+
         st.info("Procesando OCR...")
+
+        # Leer el archivo una sola vez
+
         pdf_bytes = archivo_pdf.read()
 
         if sistema == "Windows":
