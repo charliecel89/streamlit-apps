@@ -23,6 +23,31 @@ def merge_pdfs(pdf_files):
     output.seek(0)  # Regresamos al inicio del archivo
     return output
 
+def ocr_pdf_windows(pdf_bytes):
+    poppler_path = r"C:\poppler-24.08.0\Library\bin"
+    imagenes = convert_from_bytes(pdf_bytes, poppler_path=poppler_path)
+
+    os.environ["TESSDATA_PREFIX"] = r"C:\Program Files\Tesseract-OCR\tessdata"
+
+    texto = ""
+    for i, img in enumerate(imagenes):
+        st.write(f"Página {i + 1}")
+        st.image(img, use_container_width=True)
+        texto += f"\n--- Página {i + 1} ---\n" + pytesseract.image_to_string(img, lang="spa")
+    return texto
+
+
+def ocr_pdf_linux_mac(pdf_bytes):
+    texto = ""
+    with fitz.open(stream=pdf_bytes, filetype="pdf") as doc:
+        for i, page in enumerate(doc):
+            pix = page.get_pixmap(dpi=300)
+            img = Image.open(io.BytesIO(pix.tobytes("png")))
+            st.write(f"Página {i + 1}")
+            st.image(img, use_container_width=True)
+            texto += f"\n--- Página {i + 1} ---\n" + pytesseract.image_to_string(img, lang="spa")
+    return texto
+
 st.title("Mi Automatizador Personal en Python")
 
 menu = st.sidebar.selectbox("Selecciona una tarea", ["Enviar correo",
@@ -72,47 +97,25 @@ elif menu == "Extraer texto de pdf":
 
 elif menu == "Extraer texto de pdf escaneado":
     archivo_pdf = st.file_uploader("📂 Carga un PDF escaneado", type="pdf")
+    pdf_bytes = archivo_pdf.read()
     sistema = platform.system()
 
     if archivo_pdf:
         st.info("Procesando OCR...")
+        pdf_bytes = archivo_pdf.read()
 
-        # Leer PDF a imágenes con manejo de poppler
         if sistema == "Windows":
-            poppler_path = r"C:\poppler-24.08.0\Library\bin"
-            imagenes = convert_from_bytes(archivo_pdf.read(), poppler_path=poppler_path)
-
-        texto_total = ""
-
-        # Configurar TESSDATA solo en Windows
-        if sistema == "Windows":
-            import os
-            os.environ["TESSDATA_PREFIX"] = r"C:\Program Files\Tesseract-OCR\tessdata"
-
-            for i, img in enumerate(imagenes):
-                st.write(f"Página {i + 1}")
-                st.image(img, use_container_width=True)
-                texto = pytesseract.image_to_string(img, lang="spa")
-                texto_total += f"\n--- Página {i + 1} ---\n{texto}"
+            texto_total = ocr_pdf_windows(pdf_bytes)
         else:
-            with fitz.open(stream=archivo_pdf.read(), filetype="pdf") as doc:
-                for i, page in enumerate(doc):
-                    # Renderizar la página a pixmap
-                    pix = page.get_pixmap(dpi=300)
+            texto_total = ocr_pdf_linux_mac(pdf_bytes)
 
-                    # Convertir pixmap a PIL Image
-                    img = Image.open(io.BytesIO(pix.tobytes("png")))
-
-                    st.write(f"Página {i + 1}")
-                    st.image(img, use_container_width=True)
-
-                    texto = pytesseract.image_to_string(img, lang="spa")
-                    texto_total += f"\n--- Página {i + 1} ---\n{texto}"
-
-
-
-        st.subheader("📄 Texto extraído (OCR):")
-        st.text_area("Resultado OCR", texto_total, height=400)
+        if texto_total.strip():
+            st.subheader("📄 Texto extraído (OCR):")
+            st.text_area("Resultado OCR", texto_total, height=400)
+            st.download_button("Descargar texto como .txt", data=texto_total, file_name="texto_extraido.txt",
+                               mime="text/plain")
+        else:
+            st.warning("No se detectó texto en el documento.")
 
         st.download_button(
             label="Descargar texto como .txt",
