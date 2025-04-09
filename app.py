@@ -151,13 +151,6 @@ elif menu == "Extraer texto de pdf escaneado":
         else:
             st.warning("No se detectó texto en el documento.")
 
-        st.download_button(
-            label="Descargar texto como .txt",
-            data=texto_total,
-            file_name="texto_extraido.txt",
-            mime="text/plain"
-        )
-
 elif menu == "Unir PDF's":
     st.write("Sube varios archivos PDF y combínalos en uno solo.")
 
