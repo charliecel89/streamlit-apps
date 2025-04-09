@@ -12,6 +12,33 @@ import platform
 from pdf2image import convert_from_bytes
 from PIL import Image
 import io
+import requests
+import base64
+
+
+def ocr_space_image(image: Image.Image, api_key: str = 'helloworld', language: str = 'spa') -> str:
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+
+    response = requests.post(
+        'https://api.ocr.space/parse/image',
+        data={
+            'base64Image': f'data:image/png;base64,{img_str}',
+            'language': language,
+            'isOverlayRequired': False
+        },
+        headers={
+            'apikey': api_key,
+        }
+    )
+    result = response.json()
+    if result.get("IsErroredOnProcessing"):
+        return "❌ Error en OCR: " + result.get("ErrorMessage", ["Desconocido"])[0]
+
+    parsed_text = result.get("ParsedResults")[0].get("ParsedText")
+    return parsed_text.strip()
+
 
 def merge_pdfs(pdf_files):
     merger = PdfMerger()
@@ -45,7 +72,10 @@ def ocr_pdf_linux_mac(pdf_bytes):
             img = Image.open(io.BytesIO(pix.tobytes("png")))
             st.write(f"Página {i + 1}")
             st.image(img, use_container_width=True)
-            texto += f"\n--- Página {i + 1} ---\n" + pytesseract.image_to_string(img, lang="spa")
+            #texto += f"\n--- Página {i + 1} ---\n" + pytesseract.image_to_string(img, lang="spa")
+            texto_extraido = ocr_space_image(img)
+            texto += f"\n--- Página {i + 1} ---\n{texto_extraido}"
+
     return texto
 
 st.title("Mi Automatizador Personal en Python")
